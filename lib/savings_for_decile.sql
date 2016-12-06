@@ -25,7 +25,7 @@ FROM (
         practice,
         pct,
         bnf_code,
-        IF(SUBSTR(bnf_code, 14, 15) != 'A0', CONCAT(SUBSTR(bnf_code, 1, 9), 'AA', SUBSTR(bnf_code, 14, 15), SUBSTR(bnf_code, 14, 15)), bnf_code) AS generic_presentation,
+        IF(SUBSTR(bnf_code, 14, 15) != 'A0', CONCAT(SUBSTR(bnf_code, 1, 9), 'AA', SUBSTR(bnf_code, 14, 2), SUBSTR(bnf_code, 14, 2)), bnf_code) AS generic_presentation,
         actual_cost,
         quantity
       FROM
@@ -46,7 +46,7 @@ FROM (
       FROM (
           -- Calculate price per dose for each presentation, normalising the codes across brands/generics
         SELECT
-          IF(SUBSTR(bnf_code, 14, 15) != 'A0', CONCAT(SUBSTR(bnf_code, 1, 9), 'AA', SUBSTR(bnf_code, 14, 15), SUBSTR(bnf_code, 14, 15)), bnf_code) AS generic_presentation,
+          IF(SUBSTR(bnf_code, 14, 15) != 'A0', CONCAT(SUBSTR(bnf_code, 1, 9), 'AA', SUBSTR(bnf_code, 14, 2), SUBSTR(bnf_code, 14, 2)), bnf_code) AS generic_presentation,
           actual_cost/quantity AS price_per_dose
         FROM
           ebmdatalab.hscic.prescribing

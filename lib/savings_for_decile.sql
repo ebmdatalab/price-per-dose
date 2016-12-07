@@ -2,6 +2,7 @@ SELECT
   bnf.presentation,
   {{ select }}
   savings.generic_presentation AS generic_presentation,
+  savings.category AS category,
   savings.brand_count AS brand_count,
   savings.deciles.lowest_decile AS lowest_decile,
   savings.quantity AS quantity,
@@ -12,6 +13,7 @@ FROM (
     {{ inner_select }}
     presentations.generic_presentation AS generic_presentation,
     COUNT(DISTINCT bnf_code) AS brand_count,
+    MAX(presentations.category) AS category,
     deciles.lowest_decile,
     SUM(presentations.quantity) AS quantity,
     SUM(presentations.actual_cost)/SUM(presentations.quantity) AS price_per_dose,
@@ -24,12 +26,15 @@ FROM (
       SELECT
         practice,
         pct,
-        bnf_code,
-        IF(SUBSTR(bnf_code, 14, 15) != 'A0', CONCAT(SUBSTR(bnf_code, 1, 9), 'AA', SUBSTR(bnf_code, 14, 2), SUBSTR(bnf_code, 14, 2)), bnf_code) AS generic_presentation,
+        p.bnf_code AS bnf_code,
+        t.category AS category,
+        IF(SUBSTR(p.bnf_code, 14, 15) != 'A0', CONCAT(SUBSTR(p.bnf_code, 1, 9), 'AA', SUBSTR(p.bnf_code, 14, 2), SUBSTR(p.bnf_code, 14, 2)), p.bnf_code) AS generic_presentation,
         actual_cost,
         quantity
       FROM
-        ebmdatalab.hscic.prescribing
+        ebmdatalab.hscic.prescribing AS p
+      LEFT JOIN ebmdatalab.hscic.tariff t
+        ON p.bnf_code = t.bnf_code
       WHERE
         month = TIMESTAMP("{{ month }}")
         {{ restricting_condition }}
@@ -49,7 +54,7 @@ FROM (
           IF(SUBSTR(bnf_code, 14, 15) != 'A0', CONCAT(SUBSTR(bnf_code, 1, 9), 'AA', SUBSTR(bnf_code, 14, 2), SUBSTR(bnf_code, 14, 2)), bnf_code) AS generic_presentation,
           actual_cost/quantity AS price_per_dose
         FROM
-          ebmdatalab.hscic.prescribing
+          ebmdatalab.hscic.prescribing AS p
         WHERE
           month = TIMESTAMP("{{ month }}")
           {{ restricting_condition }}

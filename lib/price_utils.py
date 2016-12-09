@@ -71,10 +71,11 @@ def run_gbq(sql):
         raise
 
 
-def top_savings_per_practice(top_n=3):
+def top_savings_per_entity(top_n=3, entity='practice'):
+    assert entity in ['practice', 'pct']
     sql = get_savings(group_by='practice', sql_only=True,
                       limit=None, month='2016-09-01', order_by_savings=False)
-    sql_top = "SELECT practice, "
+    sql_top = "SELECT %s, " % entity
     select_sum = []
     select_partition = []
     for n in range(0, top_n):
@@ -85,7 +86,7 @@ def top_savings_per_practice(top_n=3):
             "ROWS BETWEEN UNBOUNDED PRECEDING AND %s FOLLOWING) "
             "AS top_%s" % (n+1, top_n, n))
     sql_top += " + ".join(select_sum) + "AS top_savings_sum"
-    sql = ("%s FROM (SELECT practice, %s FROM (%s)) "
-           "GROUP BY practice ORDER BY practice" % (
-               sql_top, ", ".join(select_partition), sql))
+    sql = ("%s FROM (SELECT %s, %s FROM (%s)) "
+           "GROUP BY %s ORDER BY %s" % (
+               sql_top, entity, ", ".join(select_partition), sql, entity, entity))
     return run_gbq(sql)

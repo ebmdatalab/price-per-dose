@@ -67,13 +67,10 @@ FROM (
     {{ group_by }}
     generic_presentation,
     deciles.lowest_decile
-  ORDER BY
-    possible_savings DESC
+    {{ order_by }}
     {{ limit }}
 ) savings
 LEFT JOIN
   ebmdatalab.hscic.bnf bnf
 ON
   bnf.presentation_code = savings.generic_presentation
-ORDER BY
-  savings.possible_savings DESC

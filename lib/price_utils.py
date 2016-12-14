@@ -1,11 +1,11 @@
 import pandas as pd
 
 
-def get_savings(for_entity='', group_by='', month='',
+def get_savings(for_entity='', group_by='', month='', cost_field='net_cost',
                 sql_only=False, limit=1000, order_by_savings=True):
     assert month
     assert group_by or for_entity
-    assert group_by in ['', 'ccg', 'practice']
+    assert group_by in ['', 'ccg', 'practice', 'product']
     restricting_condition = (
         "AND LENGTH(RTRIM(p.bnf_code)) >= 15 "
         "AND p.bnf_code NOT LIKE '1902%' -- 'Selective Preparations' \n")
@@ -30,6 +30,11 @@ def get_savings(for_entity='', group_by='', month='',
                         'presentations.practice,')
         group_by = ('presentations.practice, '
                     'presentations.pct,')
+    elif group_by == 'product':
+        select = ''
+        inner_select = ''
+        group_by = ''
+
     if order_by_savings:
         order_by = "ORDER BY possible_savings DESC"
     else:
@@ -44,6 +49,7 @@ def get_savings(for_entity='', group_by='', month='',
             ('{{ group_by }}', group_by),
             ('{{ order_by }}', order_by),
             ('{{ select }}', select),
+            ('{{ cost_field }}', cost_field),
             ('{{ inner_select }}', inner_select)
         )
         for key, value in substitutions:
@@ -67,7 +73,7 @@ def run_gbq(sql):
         return df
     except:
         for n, line in enumerate(sql.split("\n")):
-            print "%s: %s" % (n, line)
+            print "%s: %s" % (n+1, line)
         raise
 
 

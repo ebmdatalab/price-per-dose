@@ -77,22 +77,36 @@ def run_gbq(sql):
         raise
 
 
-def top_savings_per_entity(top_n=3, entity='practice'):
+def top_savings_per_entity(top_n=3, entity='practice', month='2016-09-01'):
     assert entity in ['practice', 'pct']
-    sql = get_savings(group_by='practice', sql_only=True,
-                      limit=None, month='2016-09-01', order_by_savings=False)
-    sql_top = "SELECT %s, " % entity
-    select_sum = []
-    select_partition = []
-    for n in range(0, top_n):
-        select_sum.append("COALESCE(MAX(top_%s), 0)" % n)
-        select_partition.append(
-            "NTH_VALUE(possible_savings, %s) "
-            "OVER (PARTITION BY practice ORDER BY possible_savings DESC "
-            "ROWS BETWEEN UNBOUNDED PRECEDING AND %s FOLLOWING) "
-            "AS top_%s" % (n+1, top_n, n))
-    sql_top += " + ".join(select_sum) + "AS top_savings_sum"
-    sql = ("%s FROM (SELECT %s, %s FROM (%s)) "
-           "GROUP BY %s ORDER BY %s" % (
-               sql_top, entity, ", ".join(select_partition), sql, entity, entity))
-    return run_gbq(sql)
+    sql = get_savings(group_by=entity, sql_only=True,
+                      limit=None, month=month, order_by_savings=False)
+    numbered_savings = ("SELECT %s, possible_savings, ROW_NUMBER() OVER "
+                        "(PARTITION BY %s ORDER BY possible_savings DESC) "
+                        "AS row_number FROM (%s)" % (entity, entity, sql))
+    grouped = ("SELECT %s, SUM(possible_savings) AS top_savings_sum "
+               "FROM (%s) "
+               "WHERE row_number <= %s"
+               "GROUP BY %s ORDER BY %s" %
+               (entity, numbered_savings, top_n, entity, entity))
+    return run_gbq(grouped)
+
+
+def all_presentations_in_per_entity_top_n(
+        top_n=3, entity='practice', month='2016-09-01'):
+    assert entity in ['practice', 'pct']
+    sql = get_savings(group_by=entity, sql_only=True,
+                      limit=None, month=month, order_by_savings=False)
+    numbered_savings = ("SELECT %s, possible_savings, bnf.presentation, "
+                        "bnf.chemical, generic_presentation, "
+                        "ROW_NUMBER() OVER "
+                        "  (PARTITION BY %s ORDER BY possible_savings DESC) "
+                        "AS row_number FROM (%s)" % (entity, entity, sql))
+    grouped = ("SELECT presentation, chemical, generic_presentation, "
+               "SUM(possible_savings) AS top_savings_sum "
+               "FROM (%s) "
+               "WHERE row_number <= %s"
+               "GROUP BY presentation, generic_presentation, chemical "
+               "ORDER BY presentation" %
+               (numbered_savings, top_n))
+    return run_gbq(grouped)

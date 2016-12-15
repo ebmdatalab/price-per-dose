@@ -1,5 +1,6 @@
 SELECT
   bnf.presentation,
+  bnf.chemical,
   {{ select }}
   savings.generic_presentation AS generic_presentation,
   savings.category AS category,

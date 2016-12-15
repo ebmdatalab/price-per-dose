@@ -110,3 +110,18 @@ def all_presentations_in_per_entity_top_n(
                "ORDER BY presentation" %
                (numbered_savings, top_n))
     return run_gbq(grouped)
+
+
+def cost_savings_at_minimum_for_practice(minimum, month='2016-09-01'):
+    entity = 'practice'
+    sql = get_savings(group_by=entity, sql_only=True,
+                      limit=None, month=month, order_by_savings=False)
+    grouped = ("SELECT bnf.presentation AS presentation, "
+               "bnf.chemical AS chemical, generic_presentation, "
+               "SUM(possible_savings) AS top_savings_sum "
+               "FROM (%s) "
+               "WHERE possible_savings >= %s"
+               "GROUP BY presentation, generic_presentation, chemical "
+               "ORDER BY presentation" %
+               (sql, minimum))
+    return run_gbq(grouped)

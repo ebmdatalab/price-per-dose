@@ -64,7 +64,7 @@ def get_savings(for_entity='', group_by='', month='', cost_field='net_cost',
                 sql_only=False, limit=1000, order_by_savings=True):
     assert month
     assert group_by or for_entity
-    assert group_by in ['', 'ccg', 'practice', 'product']
+    assert group_by in ['', 'pct', 'practice', 'product']
 
     prescribing_table = "ebmdatalab.hscic.%s" % make_table_for_month(month=month)
     restricting_condition = (
@@ -81,7 +81,7 @@ def get_savings(for_entity='', group_by='', month='', cost_field='net_cost',
     )
     if len(for_entity) == 3:
         restricting_condition += 'AND pct = "%s"' % for_entity
-        group_by = 'ccg'
+        group_by = 'pct'
     elif len(for_entity) > 3:
         restricting_condition += 'AND practice = "%s"' % for_entity
         group_by = 'practice'
@@ -89,7 +89,7 @@ def get_savings(for_entity='', group_by='', month='', cost_field='net_cost',
         limit = "LIMIT %s" % limit
     else:
         limit = ''
-    if group_by == 'ccg':
+    if group_by == 'pct':
         select = 'savings.presentations.pct AS pct,'
         inner_select = 'presentations.pct, '
         group_by = 'presentations.pct, '

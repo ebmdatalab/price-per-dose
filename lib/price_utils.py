@@ -69,7 +69,16 @@ def get_savings(for_entity='', group_by='', month='', cost_field='net_cost',
     prescribing_table = "ebmdatalab.hscic.%s" % make_table_for_month(month=month)
     restricting_condition = (
         "AND LENGTH(RTRIM(p.bnf_code)) >= 15 "
-        "AND p.bnf_code NOT LIKE '1902%' -- 'Selective Preparations' \n")
+        "AND p.bnf_code NOT LIKE '1902%' -- 'Selective Preparations' \n"
+        "AND p.bnf_code NOT LIKE '0905%' -- 'Nutrition' \n"
+        "AND p.bnf_code NOT LIKE '0904%' -- 'Foods' \n"
+        "AND p.bnf_code NOT LIKE '0910%' -- 'Compound Vit/Mineral Formulations' \n"
+        "AND p.bnf_code NOT LIKE '18%' -- 'Preparations used in Diagnosis' \n"
+        "AND p.bnf_code NOT LIKE '1315%' -- 'Skin > Miscellaneous Topical Preparations' \n"
+        "AND p.bnf_code NOT LIKE '120101020%' -- 'Other Aural Preparations' \n"
+        "AND p.bnf_code NOT LIKE '0101021%' -- 'Compound Alginates&Prop Indigestion Prep' \n"
+
+    )
     if len(for_entity) == 3:
         restricting_condition += 'AND pct = "%s"' % for_entity
         group_by = 'ccg'

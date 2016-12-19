@@ -29,11 +29,11 @@ FROM (
         pct,
         p.bnf_code AS bnf_code,
         t.category AS category,
-        IF(SUBSTR(p.bnf_code, 14, 15) != 'A0', CONCAT(SUBSTR(p.bnf_code, 1, 9), 'AA', SUBSTR(p.bnf_code, 14, 2), SUBSTR(p.bnf_code, 14, 2)), p.bnf_code) AS generic_presentation,
+        IF(LENGTH(RTRIM(p.bnf_code)) = 15 AND SUBSTR(p.bnf_code, 14, 15) != 'A0', CONCAT(SUBSTR(p.bnf_code, 1, 9), 'AA', SUBSTR(p.bnf_code, 14, 2), SUBSTR(p.bnf_code, 14, 2)), p.bnf_code) AS generic_presentation,
         {{ cost_field }},
         quantity
       FROM
-        ebmdatalab.hscic.prescribing AS p
+        {{ prescribing_table }} AS p
       LEFT JOIN ebmdatalab.hscic.tariff t
         ON p.bnf_code = t.bnf_code
       LEFT JOIN ebmdatalab.hscic.practices practices
@@ -55,10 +55,10 @@ FROM (
       FROM (
           -- Calculate price per dose for each presentation, normalising the codes across brands/generics
         SELECT
-          IF(SUBSTR(bnf_code, 14, 15) != 'A0', CONCAT(SUBSTR(bnf_code, 1, 9), 'AA', SUBSTR(bnf_code, 14, 2), SUBSTR(bnf_code, 14, 2)), bnf_code) AS generic_presentation,
+          IF(LENGTH(RTRIM(p.bnf_code)) = 15 AND SUBSTR(bnf_code, 14, 15) != 'A0', CONCAT(SUBSTR(bnf_code, 1, 9), 'AA', SUBSTR(bnf_code, 14, 2), SUBSTR(bnf_code, 14, 2)), bnf_code) AS generic_presentation,
           {{ cost_field }}/quantity AS price_per_dose
         FROM
-          ebmdatalab.hscic.prescribing AS p
+          {{ prescribing_table }} AS p
         LEFT JOIN ebmdatalab.hscic.practices practices
           ON p.practice = practices.code
         WHERE

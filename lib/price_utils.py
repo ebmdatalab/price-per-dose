@@ -1,4 +1,63 @@
+import datetime
+import time
 import pandas as pd
+import peakutils
+import numpy
+import csv
+import requests
+from sets import Set
+
+from googleapiclient import discovery
+from oauth2client.client import GoogleCredentials
+
+
+def make_table_for_month(month='2016-09-01'):
+    url = ("https://docs.google.com/spreadsheets/d/"
+           "1SvMGCKrmqsNkZYuGW18Sf0wTluXyV4bhyZQaVLcO41c/"
+           "pub?gid=1784930737&single=true&output=csv")
+    cases = []
+    seen = Set()
+
+    with requests.Session() as s:
+        download = s.get(url)
+
+        decoded_content = download.content.decode('utf-8')
+
+        cr = csv.reader(decoded_content.splitlines(), delimiter=',')
+        cr.next()
+        for row in cr:
+            should_merge = row[5].strip() == "Y"
+            if should_merge:
+                source_code = row[1].strip()
+                code_to_merge = row[8].strip()
+                if source_code not in seen and code_to_merge not in seen:
+                    cases.append((source_code, code_to_merge))
+                seen.add(source_code)
+                seen.add(code_to_merge)
+
+    query = """
+      SELECT
+        practice,
+        pct,
+      CASE bnf_code
+        %s
+        ELSE bnf_code
+      END AS bnf_code,
+        month,
+        actual_cost,
+        net_cost,
+        quantity
+      FROM
+        ebmdatalab.hscic.prescribing
+      WHERE month = TIMESTAMP('%s')
+    """ % (''.join(["WHEN '%s' THEN '%s'" % (code_to_merge, source_code)
+            for (source_code, code_to_merge) in cases]),
+           month)
+    table_name = 'prescribing_%s' % month.replace('-', '_')
+    query_and_return('ebmdatalab', 'hscic',
+                     table_name,
+                     query, legacy=False)
+    return table_name
 
 
 def get_savings(for_entity='', group_by='', month='', cost_field='net_cost',
@@ -6,6 +65,8 @@ def get_savings(for_entity='', group_by='', month='', cost_field='net_cost',
     assert month
     assert group_by or for_entity
     assert group_by in ['', 'ccg', 'practice', 'product']
+
+    prescribing_table = "ebmdatalab.hscic.%s" % make_table_for_month(month=month)
     restricting_condition = (
         "AND LENGTH(RTRIM(p.bnf_code)) >= 15 "
         "AND p.bnf_code NOT LIKE '1902%' -- 'Selective Preparations' \n")
@@ -49,6 +110,7 @@ def get_savings(for_entity='', group_by='', month='', cost_field='net_cost',
             ('{{ group_by }}', group_by),
             ('{{ order_by }}', order_by),
             ('{{ select }}', select),
+            ('{{ prescribing_table }}', prescribing_table),
             ('{{ cost_field }}', cost_field),
             ('{{ inner_select }}', inner_select)
         )
@@ -125,3 +187,93 @@ def cost_savings_at_minimum_for_practice(minimum, month='2016-09-01'):
                "ORDER BY presentation" %
                (sql, minimum))
     return run_gbq(grouped)
+
+
+def count_peaks(code):
+    sql = """  SELECT
+        *
+      FROM
+        ebmdatalab.tmp_eu.prescribing_sept
+      WHERE
+        bnf_code = '%s'""" % code
+    df = pd.io.gbq.read_gbq(
+        sql, project_id="ebmdatalab", verbose=False, dialect='standard')
+    df['ppq'] = df['actual_cost'] / df['quantity']
+    df = df.sort_values('ppq')
+    y, bin_edges = numpy.histogram(
+        df['ppq'], range=(-5, df['ppq'].max() * 1.5))
+    return len(peakutils.indexes(y, thres=0.01, min_dist=len(y)/3.0))
+
+
+def get_bq_service():
+    """Returns a bigquery service endpoint
+    """
+    # We've started using the google-cloud library since first writing
+    # this. When it settles down a bit, start using that rather than
+    # this low-level API. See
+    # https://googlecloudplatform.github.io/google-cloud-python/
+    credentials = GoogleCredentials.get_application_default()
+    return discovery.build('bigquery', 'v2',
+                           credentials=credentials)
+
+
+def query_and_return(project_id, dataset_id, table_id, query, legacy=False):
+    """Send query to BigQuery, wait, write it to table_id, and return
+    response object when the job has completed.
+
+    """
+    payload = {
+        "configuration": {
+            "query": {
+                "query": query,
+                "flattenResuts": False,
+                "allowLargeResults": True,
+                "timeoutMs": 100000,
+                "useQueryCache": True,
+                "useLegacySql": legacy,
+                "destinationTable": {
+                    "projectId": project_id,
+                    "tableId": table_id,
+                    "datasetId": dataset_id
+                },
+                "createDisposition": "CREATE_IF_NEEDED",
+                "writeDisposition": "WRITE_TRUNCATE"
+            }
+        }
+    }
+    # We've started using the google-cloud library since first
+    # writing this. TODO: decide if we can use that throughout
+    bq = get_bq_service()
+    start = datetime.datetime.now()
+    response = bq.jobs().insert(
+        projectId=project_id,
+        body=payload).execute()
+    counter = 0
+    job_id = response['jobReference']['jobId']
+    while True:
+        time.sleep(1)
+        response = bq.jobs().get(
+            projectId=project_id,
+            jobId=job_id).execute()
+        counter += 1
+        if response['status']['state'] == 'DONE':
+            if 'errors' in response['status']:
+                query = str(response['configuration']['query']['query'])
+                for i, l in enumerate(query.split("\n")):
+                    # print SQL query with line numbers for debugging
+                    print "{:>3}: {}".format(i + 1, l)
+                raise StandardError(
+                    json.dumps(response['status']['errors'], indent=2))
+            else:
+                break
+    bytes_billed = float(
+        response['statistics']['query']['totalBytesBilled'])
+    gb_processed = round(bytes_billed / 1024 / 1024 / 1024, 2)
+    est_cost = round(bytes_billed / 1e+12 * 5.0, 2)
+    # Add our own metadata
+    elapsed = (datetime.datetime.now() - start).total_seconds()
+    response['openp'] = {'query': query,
+                         'est_cost': est_cost,
+                         'time': elapsed,
+                         'gb_processed': gb_processed}
+    return response

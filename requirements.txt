@@ -1,0 +1,6 @@
+requests
+peakutils
+pytest
+pytest-mock
+pandas
+ebmdatalab-python

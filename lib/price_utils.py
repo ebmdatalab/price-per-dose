@@ -1,5 +1,6 @@
 import datetime
 import time
+import json
 import pandas as pd
 import peakutils
 import numpy
@@ -11,7 +12,9 @@ from googleapiclient import discovery
 from oauth2client.client import GoogleCredentials
 
 
-def make_table_for_month(month='2016-09-01'):
+def make_table_for_month(month='2016-09-01',
+                         namespace='hscic',
+                         prescribing_table='prescribing'):
     url = ("https://docs.google.com/spreadsheets/d/"
            "1SvMGCKrmqsNkZYuGW18Sf0wTluXyV4bhyZQaVLcO41c/"
            "pub?gid=1784930737&single=true&output=csv")
@@ -28,6 +31,7 @@ def make_table_for_month(month='2016-09-01'):
         for row in cr:
             should_merge = row[5].strip() == "Y"
             if should_merge:
+                print row
                 source_code = row[1].strip()
                 code_to_merge = row[8].strip()
                 if source_code not in seen and code_to_merge not in seen:
@@ -48,25 +52,35 @@ def make_table_for_month(month='2016-09-01'):
         net_cost,
         quantity
       FROM
-        ebmdatalab.hscic.prescribing
+        ebmdatalab.%s.%s
       WHERE month = TIMESTAMP('%s')
     """ % (''.join(["WHEN '%s' THEN '%s'" % (code_to_merge, source_code)
             for (source_code, code_to_merge) in cases]),
+           namespace,
+           prescribing_table,
            month)
-    table_name = 'prescribing_%s' % month.replace('-', '_')
-    query_and_return('ebmdatalab', 'hscic',
-                     table_name,
+    target_table_name = 'prescribing_%s' % month.replace('-', '_')
+    query_and_return('ebmdatalab', namespace,
+                     target_table_name,
                      query, legacy=False)
-    return table_name
+    return target_table_name
 
 
 def get_savings(for_entity='', group_by='', month='', cost_field='net_cost',
-                sql_only=False, limit=1000, order_by_savings=True):
+                sql_only=False, limit=1000, order_by_savings=True,
+                namespace='hscic', prescribing_table='prescribing'):
     assert month
     assert group_by or for_entity
     assert group_by in ['', 'pct', 'practice', 'product']
 
-    prescribing_table = "ebmdatalab.hscic.%s" % make_table_for_month(month=month)
+    prescribing_table = "ebmdatalab.%s.%s" % (
+        namespace,
+        make_table_for_month(
+            month=month,
+            namespace=namespace,
+            prescribing_table=prescribing_table
+        )
+    )
     restricting_condition = (
         "AND LENGTH(RTRIM(p.bnf_code)) >= 15 "
         "AND p.bnf_code NOT LIKE '1902%' -- 'Selective Preparations' \n"
@@ -148,26 +162,43 @@ def run_gbq(sql):
         raise
 
 
-def top_savings_per_entity(top_n=3, entity='practice', month='2016-09-01'):
+def top_savings_per_entity(top_n=3,
+                           entity='practice',
+                           month='2016-09-01',
+                           namespace='hscic',
+                           prescribing_table='prescribing',
+                           summed=True):
     assert entity in ['practice', 'pct']
-    sql = get_savings(group_by=entity, sql_only=True,
+    sql = get_savings(group_by=entity, sql_only=True, namespace=namespace,
+                      prescribing_table=prescribing_table,
                       limit=None, month=month, order_by_savings=False)
     numbered_savings = ("SELECT %s, possible_savings, ROW_NUMBER() OVER "
                         "(PARTITION BY %s ORDER BY possible_savings DESC) "
                         "AS row_number FROM (%s)" % (entity, entity, sql))
-    grouped = ("SELECT %s, SUM(possible_savings) AS top_savings_sum "
-               "FROM (%s) "
-               "WHERE row_number <= %s"
-               "GROUP BY %s ORDER BY %s" %
-               (entity, numbered_savings, top_n, entity, entity))
+    if summed:
+        grouped = ("SELECT %s, SUM(possible_savings) AS top_savings_sum "
+                   "FROM (%s) "
+                   "WHERE row_number <= %s "
+                   "GROUP BY %s ORDER BY %s" %
+                   (entity, numbered_savings, top_n, entity, entity))
+    else:
+        grouped = ("SELECT * "
+                   "FROM (%s) "
+                   "WHERE row_number <= %s""" %
+                   (entity, numbered_savings, top_n))
     return run_gbq(grouped)
 
 
 def all_presentations_in_per_entity_top_n(
-        top_n=3, entity='practice', month='2016-09-01'):
+        top_n=3,
+        entity='practice',
+        month='2016-09-01',
+        namespace='hscic',
+        prescribing_table='prescribing'):
     assert entity in ['practice', 'pct']
     sql = get_savings(group_by=entity, sql_only=True,
-                      limit=None, month=month, order_by_savings=False)
+                      limit=None, month=month, order_by_savings=False,
+                      namespace=namespace, prescribing_table=prescribing_table)
     numbered_savings = ("SELECT %s, possible_savings, bnf.presentation, "
                         "bnf.chemical, generic_presentation, "
                         "ROW_NUMBER() OVER "
@@ -178,22 +209,27 @@ def all_presentations_in_per_entity_top_n(
                "FROM (%s) "
                "WHERE row_number <= %s"
                "GROUP BY presentation, generic_presentation, chemical "
-               "ORDER BY presentation" %
+               "ORDER BY top_savings_sum DESC" %
                (numbered_savings, top_n))
     return run_gbq(grouped)
 
 
-def cost_savings_at_minimum_for_practice(minimum, month='2016-09-01'):
+def cost_savings_at_minimum_for_practice(
+        minimum,
+        month='2016-09-01',
+        namespace='hscic',
+        prescribing_table='prescribing'):
     entity = 'practice'
     sql = get_savings(group_by=entity, sql_only=True,
-                      limit=None, month=month, order_by_savings=False)
+                      limit=None, month=month, order_by_savings=False,
+                      namespace=namespace, prescribing_table=prescribing_table)
     grouped = ("SELECT bnf.presentation AS presentation, "
                "bnf.chemical AS chemical, generic_presentation, "
                "SUM(possible_savings) AS top_savings_sum "
                "FROM (%s) "
-               "WHERE possible_savings >= %s"
+               "WHERE possible_savings >= %s "
                "GROUP BY presentation, generic_presentation, chemical "
-               "ORDER BY presentation" %
+               "ORDER BY top_savings_sum DESC" %
                (sql, minimum))
     return run_gbq(grouped)
 

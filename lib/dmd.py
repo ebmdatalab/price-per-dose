@@ -17,8 +17,15 @@ SQLLITE_TYPE_MAP = {
     'xs:float': 'REAL',
 }
 
+
 def connection():
-    return sqlite3.connect('dmd.db')
+    conn = sqlite3.connect('dmd.db')
+    c = conn.cursor()
+    # Settings to speed things up
+    c.execute('PRAGMA cache_size = 500000')
+    c.execute('PRAGMA synchronous = OFF')
+    return conn
+
 
 
 def create_table(conn, info):
@@ -39,7 +46,8 @@ def create_table(conn, info):
     sql += ");"
     conn.execute(sql)
     for i in indexes:
-        sql = "CREATE INDEX IF NOT EXISTS i_%s ON %s(%s);" % (i, info['table_name'], i)
+        sql = "CREATE INDEX IF NOT EXISTS i_%s_%s ON %s(%s);" % (
+            info['table_name'], i, info['table_name'], i)
         conn.execute(sql)
     conn.commit()
 
@@ -74,7 +82,10 @@ def get_table_info(conn, schema_names):
                 table_metadata = table.find(
                     './xs:complexType/xs:sequence/xs:element', ns)
                 schema_name = table_metadata.attrib['type']
-                if schema_name == 'InfoType':  # special case for info
+                if root_name == 'LOOKUP':
+                    # In the LOOKUP namespace, the key we use for
+                    # table_name is not unique and is always INFO, so
+                    # we special-case that.
                     current_table_def['table_name'] = 'LOOKUP_' + table.attrib['name']
                     current_table_def['node_name'] = "%s/INFO" % table.attrib['name']
                 else:
@@ -171,7 +182,7 @@ def process_datafiles(to_process):
     conn.close()
 
 
-if __name__ == '__main__2':
+if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1:
         to_process = [sys.argv[1]]
@@ -181,5 +192,11 @@ if __name__ == '__main__2':
     create_dmd_product()
     add_bnf_codes()
 
-if __name__ == '__main__':
+if __name__ == '__main__q':
+    import sys
+    if len(sys.argv) > 1:
+        to_process = [sys.argv[1]]
+    else:
+        to_process = glob.glob("./files/*xml")
+    process_datafiles(to_process)
     add_bnf_codes()

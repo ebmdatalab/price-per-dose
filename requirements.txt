@@ -1,6 +1,8 @@
+lxml
 requests
 peakutils
 pytest
 pytest-mock
 pandas
 ebmdatalab-python
+sqlite3

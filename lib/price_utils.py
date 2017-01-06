@@ -31,7 +31,6 @@ def make_table_for_month(month='2016-09-01',
         for row in cr:
             should_merge = row[5].strip() == "Y"
             if should_merge:
-                print row
                 source_code = row[1].strip()
                 code_to_merge = row[8].strip()
                 if source_code not in seen and code_to_merge not in seen:
@@ -72,26 +71,37 @@ def get_savings(for_entity='', group_by='', month='', cost_field='net_cost',
     assert month
     assert group_by or for_entity
     assert group_by in ['', 'pct', 'practice', 'product']
-
-    prescribing_table = "ebmdatalab.%s.%s" % (
-        namespace,
-        make_table_for_month(
-            month=month,
-            namespace=namespace,
-            prescribing_table=prescribing_table
-        )
-    )
+    prescribing_table = 'ebmdatalab.hscic.prescribing_2016_09_01'
+    # prescribing_table = "ebmdatalab.%s.%s" % (
+    #     namespace,
+    #     make_table_for_month(
+    #         month=month,
+    #         namespace=namespace,
+    #         prescribing_table=prescribing_table
+    #     )
+    # )
     restricting_condition = (
         "AND LENGTH(RTRIM(p.bnf_code)) >= 15 "
-        "AND p.bnf_code NOT LIKE '1902%' -- 'Selective Preparations' \n"
-        "AND p.bnf_code NOT LIKE '0905%' -- 'Nutrition' \n"
-        "AND p.bnf_code NOT LIKE '0904%' -- 'Foods' \n"
-        "AND p.bnf_code NOT LIKE '0910%' -- 'Compound Vit/Mineral Formulations' \n"
-        "AND p.bnf_code NOT LIKE '18%' -- 'Preparations used in Diagnosis' \n"
-        "AND p.bnf_code NOT LIKE '1315%' -- 'Skin > Miscellaneous Topical Preparations' \n"
-        "AND p.bnf_code NOT LIKE '120101020%' -- 'Other Aural Preparations' \n"
-        "AND p.bnf_code NOT LIKE '0101021%' -- 'Compound Alginates&Prop Indigestion Prep' \n"
-
+        "AND p.bnf_code NOT LIKE '0302000C0____BE' "  # issue #10
+        "AND p.bnf_code NOT LIKE '0302000C0____BF' "  # issue #10
+        "AND p.bnf_code NOT LIKE '0302000C0____BH' "  # issue #10
+        "AND p.bnf_code NOT LIKE '0302000C0____BG' "  # issue #10
+        "AND p.bnf_code NOT LIKE '0904010H0%' "  # issue #9
+        "AND p.bnf_code NOT LIKE '0904010H0%' "  # issue #9
+        "AND p.bnf_code NOT LIKE '1311070S0A____AA' "  # issue #9
+        "AND p.bnf_code NOT LIKE '1311020L0____BS' "  # issue #9
+        "AND p.bnf_code NOT LIKE '0301020S0____AA' "  # issue #12
+        "AND p.bnf_code NOT LIKE '190700000BBCJA0' "  # issue #12
+        "AND p.bnf_code NOT LIKE '0604011L0BGAAAH' "  # issue #12
+        "AND p.bnf_code NOT LIKE '1502010J0____BY' "  # issue #12
+        "AND p.bnf_code NOT LIKE '1201010F0AAAAAA' "  # issue #12
+        "AND p.bnf_code NOT LIKE '060106000BBAAA0' "  # issue #14
+        "AND p.bnf_code NOT LIKE '190201000AABJBJ' "  # issue #14
+        "AND p.bnf_code NOT LIKE '190201000AABKBK' "  # issue #14
+        "AND p.bnf_code NOT LIKE '190201000AABLBL' "  # issue #14
+        "AND p.bnf_code NOT LIKE '190201000AABMBM' "  # issue #14
+        "AND p.bnf_code NOT LIKE '190201000AABNBN' "  # issue #14
+        "AND p.bnf_code NOT LIKE '190202000AAADAD' "  # issue #14
     )
     if len(for_entity) == 3:
         restricting_condition += 'AND pct = "%s"' % for_entity
@@ -185,7 +195,7 @@ def top_savings_per_entity(top_n=3,
         grouped = ("SELECT * "
                    "FROM (%s) "
                    "WHERE row_number <= %s""" %
-                   (entity, numbered_savings, top_n))
+                   (numbered_savings,  top_n))
     return run_gbq(grouped)
 
 
@@ -245,9 +255,13 @@ def count_peaks(code):
         sql, project_id="ebmdatalab", verbose=False, dialect='standard')
     df['ppq'] = df['actual_cost'] / df['quantity']
     df = df.sort_values('ppq')
-    y, bin_edges = numpy.histogram(
-        df['ppq'], range=(-5, df['ppq'].max() * 1.5))
-    return len(peakutils.indexes(y, thres=0.01, min_dist=len(y)/3.0))
+    max_val = df['ppq'].max() * 1.5
+    if numpy.isfinite(max_val):
+        y, bin_edges = numpy.histogram(
+            df['ppq'], range=(-5, max_val))
+        return len(peakutils.indexes(y, thres=0.01, min_dist=len(y)/3.0))
+    else:
+        return None
 
 
 def get_bq_service():

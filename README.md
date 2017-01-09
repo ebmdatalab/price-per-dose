@@ -76,6 +76,11 @@ However, in a handful of products, the definition of `quantity` is not consisten
 
 Various special products are coded as being in "unspecified" categories. We exclude these. See issue #14 for discussion.
 
+# See also
+
+* [Comparing relative performance over time against a specific BNF paragraph](https://github.com/ebmdatalab/price-per-dose/blob/master/Comparing%20performance%20of%20entities%20over%20time.ipynb) (jupyter notebook)
+* [How would I scalp the NHS?](https://github.com/ebmdatalab/price-per-dose/blob/master/How%20would%20I%20scalp%20the%20NHS%3F.ipynb) (jupyter notebook) - looking at how we might discover NP8 drugs which are possibly being sold at artificially inflated prices
+
 # Important development notes
 
 The current calculation relies on a table "tariff" for the tariff categories. This was correct as of September 2016, but changes monthly. That table should be updated before doing any analyses by tariff category.

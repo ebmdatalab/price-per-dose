@@ -4,7 +4,7 @@ SELECT
   {{ select }}
   savings.generic_presentation AS generic_presentation,
   savings.category AS category,
-  savings.brand_count AS brand_count,
+  savings.avg_brand_count_per_practice AS avg_brand_count_per_practice,
   savings.deciles.lowest_decile AS lowest_decile,
   savings.quantity AS quantity,
   savings.price_per_dose AS price_per_dose,
@@ -14,7 +14,7 @@ FROM (
       {{ inner_select }}
       generic_presentation,
       deciles.lowest_decile,
-      SUM(brand_count) AS brand_count,
+      AVG(brand_count) AS avg_brand_count_per_practice,
       MAX(category) AS category,
       SUM(quantity) AS quantity,
       AVG(price_per_dose) AS price_per_dose,
@@ -42,7 +42,11 @@ FROM (
           pct,
           p.bnf_code AS bnf_code,
           t.category AS category,
-          IF(LENGTH(RTRIM(p.bnf_code)) = 15 AND SUBSTR(p.bnf_code, 14, 15) != 'A0',
+          IF(
+            LENGTH(RTRIM(p.bnf_code)) = 15 -- excludes devices etc
+              AND (
+                SUBSTR(p.bnf_code, 14, 15) != 'A0' -- excludes things without generic equivalents
+                OR SUBSTR(p.bnf_code, 1, 9) == '0601060U0' OR SUBSTR(p.bnf_code, 1, 9) == '0601060D0'), -- unless they're one of our two exceptions -- see issue #1
             CONCAT(SUBSTR(p.bnf_code, 1, 9), 'AA', SUBSTR(p.bnf_code, 14, 2), SUBSTR(p.bnf_code, 14, 2)),
             NULL) AS generic_presentation,
           {{ cost_field }},
@@ -70,7 +74,11 @@ FROM (
         FROM (
             -- Calculate price per dose for each presentation, normalising the codes across brands/generics
           SELECT
-            IF(LENGTH(RTRIM(p.bnf_code)) = 15 AND SUBSTR(bnf_code, 14, 15) != 'A0',
+            IF(
+              LENGTH(RTRIM(p.bnf_code)) = 15 -- excludes devices etc
+                AND (
+                  SUBSTR(bnf_code, 14, 15) != 'A0' -- excludes things without generic equivalents
+                  OR SUBSTR(bnf_code, 1, 9) == '0601060U0' OR SUBSTR(bnf_code, 1, 9) == '0601060D0'), -- unless they're one of our two exceptions -- see issue #1
               CONCAT(SUBSTR(bnf_code, 1, 9), 'AA', SUBSTR(bnf_code, 14, 2), SUBSTR(bnf_code, 14, 2)),
               NULL) AS generic_presentation,
             {{ cost_field }}/quantity AS price_per_dose
@@ -93,8 +101,6 @@ FROM (
       presentations.pct,
       generic_presentation,
       deciles.lowest_decile
-      {{ order_by }}
-      {{ limit }}
   )
 
   GROUP BY
@@ -102,8 +108,20 @@ FROM (
     deciles.lowest_decile,
     {{ group_by }}
     {{ order_by }}
+    {{ limit }}
 ) savings
 LEFT JOIN
-  ebmdatalab.hscic.bnf bnf
+  (SELECT
+    *
+  FROM ebmdatalab.hscic.bnf, (
+    SELECT
+      'Glucose Blood Testing Reagents' AS presentation,
+      'Glucose Blood Testing Reagents' AS chemical,
+      '0601060D0AAA0A0' AS presentation_code),
+    (
+    SELECT
+      'Urine Testing Reagents' AS presentation,
+      'Urine Testing Reagents' AS chemical,
+      '0601060U0AAA0A0' AS presentation_code)) bnf
 ON
   bnf.presentation_code = savings.generic_presentation

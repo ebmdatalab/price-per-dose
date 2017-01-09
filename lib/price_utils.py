@@ -228,8 +228,9 @@ def all_presentations_in_per_entity_top_n(
     grouped = ("SELECT presentation, chemical, generic_presentation, "
                "SUM(possible_savings) AS top_savings_sum "
                "FROM (%s) "
-               "WHERE row_number <= %s"
+               "WHERE row_number <= %s "
                "GROUP BY presentation, generic_presentation, chemical "
+               "HAVING SUM(possible_savings) > 0 "
                "ORDER BY top_savings_sum DESC" %
                (numbered_savings, top_n))
     return run_gbq(grouped)

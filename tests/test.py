@@ -17,7 +17,7 @@ def test_get_savings_by_practice(load_test_data, mocker):
     mocker.patch('requests.Session')
     mock_reader = mocker.patch('csv.reader')
     substitutes = [['', '040702040AAAMAM', '', '', '',
-          'Y', '', '', 'XXXXXXXXXXXXXXX']]
+                    'Y', '', '', 'XXXXXXXXXXXXXXX']]
     mock_reader.return_value.__iter__.return_value = substitutes
 
     df = price_utils.get_savings(
@@ -40,7 +40,7 @@ def test_get_savings_by_practice_empty_date(load_test_data, mocker):
     mocker.patch('requests.Session')
     mock_reader = mocker.patch('csv.reader')
     substitutes = [['', '040702040AAAMAM', '', '', '',
-          'Y', '', '', 'XXXXXXXXXXXXXXX']]
+                    'Y', '', '', 'XXXXXXXXXXXXXXX']]
     mock_reader.return_value.__iter__.return_value = substitutes
 
     df = price_utils.get_savings(
@@ -56,7 +56,7 @@ def test_get_savings_by_ccg(load_test_data, mocker):
     mocker.patch('requests.Session')
     mock_reader = mocker.patch('csv.reader')
     substitutes = [['', '040702040AAAMAM', '', '', '',
-          'Y', '', '', 'XXXXXXXXXXXXXXX']]
+                    'Y', '', '', 'XXXXXXXXXXXXXXX']]
     mock_reader.return_value.__iter__.return_value = substitutes
 
     df = price_utils.get_savings(
@@ -75,7 +75,7 @@ def test_get_savings_by_product(load_test_data, mocker):
     mocker.patch('requests.Session')
     mock_reader = mocker.patch('csv.reader')
     substitutes = [['', '040702040AAAMAM', '', '', '',
-          'Y', '', '', 'XXXXXXXXXXXXXXX']]
+                    'Y', '', '', 'XXXXXXXXXXXXXXX']]
     mock_reader.return_value.__iter__.return_value = substitutes
 
     df = price_utils.get_savings(
@@ -95,7 +95,7 @@ def test_top_savings_per_entity(load_test_data, mocker):
     mocker.patch('requests.Session')
     mock_reader = mocker.patch('csv.reader')
     substitutes = [['', '040702040AAAMAM', '', '', '',
-          'Y', '', '', 'XXXXXXXXXXXXXXX']]
+                    'Y', '', '', 'XXXXXXXXXXXXXXX']]
     mock_reader.return_value.__iter__.return_value = substitutes
 
     df = price_utils.top_savings_per_entity(
@@ -113,7 +113,7 @@ def test_all_presentations_in_per_entity_top_n(load_test_data, mocker):
     mocker.patch('requests.Session')
     mock_reader = mocker.patch('csv.reader')
     substitutes = [['', '040702040AAAMAM', '', '', '',
-          'Y', '', '', 'XXXXXXXXXXXXXXX']]
+                    'Y', '', '', 'XXXXXXXXXXXXXXX']]
     mock_reader.return_value.__iter__.return_value = substitutes
 
     df = price_utils.all_presentations_in_per_entity_top_n(
@@ -131,7 +131,7 @@ def test_cost_savings_at_minimum_for_practice_high(load_test_data, mocker):
     mocker.patch('requests.Session')
     mock_reader = mocker.patch('csv.reader')
     substitutes = [['', '040702040AAAMAM', '', '', '',
-          'Y', '', '', 'XXXXXXXXXXXXXXX']]
+                    'Y', '', '', 'XXXXXXXXXXXXXXX']]
     mock_reader.return_value.__iter__.return_value = substitutes
 
     df = price_utils.cost_savings_at_minimum_for_practice(
@@ -148,7 +148,7 @@ def test_cost_savings_at_minimum_for_practice_low(load_test_data, mocker):
     mocker.patch('requests.Session')
     mock_reader = mocker.patch('csv.reader')
     substitutes = [['', '040702040AAAMAM', '', '', '',
-          'Y', '', '', 'XXXXXXXXXXXXXXX']]
+                    'Y', '', '', 'XXXXXXXXXXXXXXX']]
     mock_reader.return_value.__iter__.return_value = substitutes
 
     df = price_utils.cost_savings_at_minimum_for_practice(

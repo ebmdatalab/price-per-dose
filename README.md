@@ -23,6 +23,9 @@ In some cases, the variability in price-per-dose is outside the influence of the
 
 An element of judgement is likely to be required in some of these cases, and they are not all detectable automatically. We therefore flag where products may be subject to any of these conditions.
 
+This is discussed further in issue #2.
+
+
 # Special handling of specific codes
 
 ## Products which can't be substituted but the data implies they can
@@ -76,3 +79,7 @@ Various special products are coded as being in "unspecified" categories. We excl
 # Important development notes
 
 The current calculation relies on a table "tariff" for the tariff categories. This was correct as of September 2016, but changes monthly. That table should be updated before doing any analyses by tariff category.
+
+Tests can be run with
+
+    py.test tests/test.py

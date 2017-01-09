@@ -2,7 +2,6 @@ import datetime
 import time
 import json
 import pandas as pd
-import peakutils
 import numpy
 import csv
 import requests
@@ -15,6 +14,18 @@ from oauth2client.client import GoogleCredentials
 def make_table_for_month(month='2016-09-01',
                          namespace='hscic',
                          prescribing_table='prescribing'):
+    """Handle code substitutions.
+
+    Because (for example) Tramadol tablets and capsules can almost
+    always be substituted, we consider them the same chemical for the purposes of our analysis.
+
+    Therefore, wherever Tramadol capsules appear in the source data,
+    we treat them as Tramadol tablets (for example).
+
+    The mapping of what we consider equivalent is stored in a Google
+    Sheet.
+
+    """
     url = ("https://docs.google.com/spreadsheets/d/"
            "1SvMGCKrmqsNkZYuGW18Sf0wTluXyV4bhyZQaVLcO41c/"
            "pub?gid=1784930737&single=true&output=csv")
@@ -58,7 +69,7 @@ def make_table_for_month(month='2016-09-01',
            namespace,
            prescribing_table,
            month)
-    target_table_name = 'prescribing_%s' % month.replace('-', '_')
+    target_table_name = 'prescribing_with_merged_codes_%s' % month.replace('-', '_')
     query_and_return('ebmdatalab', namespace,
                      target_table_name,
                      query, legacy=False)
@@ -71,15 +82,15 @@ def get_savings(for_entity='', group_by='', month='', cost_field='net_cost',
     assert month
     assert group_by or for_entity
     assert group_by in ['', 'pct', 'practice', 'product']
-    prescribing_table = 'ebmdatalab.hscic.prescribing_2016_09_01'
-    # prescribing_table = "ebmdatalab.%s.%s" % (
-    #     namespace,
-    #     make_table_for_month(
-    #         month=month,
-    #         namespace=namespace,
-    #         prescribing_table=prescribing_table
-    #     )
-    # )
+    #prescribing_table = 'ebmdatalab.hscic.prescribing_2016_09_01'
+    prescribing_table = "ebmdatalab.%s.%s" % (
+        namespace,
+        make_table_for_month(
+            month=month,
+            namespace=namespace,
+            prescribing_table=prescribing_table
+        )
+    )
     restricting_condition = (
         "AND LENGTH(RTRIM(p.bnf_code)) >= 15 "
         "AND p.bnf_code NOT LIKE '0302000C0____BE' "  # issue #10
@@ -242,26 +253,6 @@ def cost_savings_at_minimum_for_practice(
                "ORDER BY top_savings_sum DESC" %
                (sql, minimum))
     return run_gbq(grouped)
-
-
-def count_peaks(code):
-    sql = """  SELECT
-        *
-      FROM
-        ebmdatalab.tmp_eu.prescribing_sept
-      WHERE
-        bnf_code = '%s'""" % code
-    df = pd.io.gbq.read_gbq(
-        sql, project_id="ebmdatalab", verbose=False, dialect='standard')
-    df['ppq'] = df['actual_cost'] / df['quantity']
-    df = df.sort_values('ppq')
-    max_val = df['ppq'].max() * 1.5
-    if numpy.isfinite(max_val):
-        y, bin_edges = numpy.histogram(
-            df['ppq'], range=(-5, max_val))
-        return len(peakutils.indexes(y, thres=0.01, min_dist=len(y)/3.0))
-    else:
-        return None
 
 
 def get_bq_service():

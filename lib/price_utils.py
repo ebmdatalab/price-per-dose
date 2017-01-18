@@ -172,15 +172,16 @@ def get_savings(for_entity='', group_by='', month='', cost_field='net_cost',
             df.index.name = 'bnf_code'
             # Add in substitutions column
             subs = get_substitutions().set_index('Code')
-            subs['formulation_swap'] = (subs['Formulation'] +
-                            ' / ' +
-                            subs['Alternative formulation'])
+            subs['formulation_swap'] = (
+                subs['Formulation'] +
+                ' / ' +
+                subs['Alternative formulation'])
             df = df.join(
                 subs[['formulation_swap']], how='left')
             con = sqlite3.connect("dmd.db")
 
             # Add DMD info
-            sql = ("SELECT BNF_CODE, num_pack_sizes, flag_imported, "
+            sql = ("SELECT DISTINCT BNF_CODE, num_pack_sizes, flag_imported, "
                    "flag_broken_bulk, flag_non_bioequivalence, "
                    "flag_special_containers FROM dmd_product "
                    "WHERE product_type = 1 -- generic")

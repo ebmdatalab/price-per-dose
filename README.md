@@ -2,9 +2,11 @@
 
 This project compares the price-per-quantity between different clinically comparable products, so we can advise practices and CCGs on potential cost savings.
 
-Within a single month, for each presentation and brand of every chemical substance (e.g. Tramadol Hydrochrolde 300mg tablets), we calcuate the price-per-dose at the cheapest decile. We then work out what each GP Practice or CCG could save if it prescribed that presentation at the best decile.
+We work from the monthly NHS dataset. In this, each row of data summarises all prescribing by a single BNF code (i.e. presentation, be it generic or branded) for one practice. For example, for a given practice we might see two rows of data for tramadol: one for Tramadol Hydrochloride 300mg tablets where it was prescribed generically; and one for Tramulief 300mg tablets where it was prescribed by brand.
 
-The idea is that the price achieved at the best decile for a chemical-presentation should be achievable for everyone; but see below for a discussion.
+Within a single month, for each row of data, we calculate a price-per-dose (in the case of Tramadol tablets, this is a price-per-pill).  We then approximate a realistic, best-case price-per-pill by calculating the cheapest decile across all brands (and generics) for that presentation.
+
+We then work out what each GP Practice or CCG could save if it prescribed that presentation at the best decile.
 
 * We only consider data from a single month, because the Drug Tariff changes monthly, making price-per-dose comparisons meaningless between months
 * We cover data from GP Practices only
@@ -20,8 +22,7 @@ Accordingly, in most cases, a saving should be achievable by switching to the ch
 
 However, the variability in price-per-dose is often
 outside the influence of the prescriber. As a result, it is likely
-that most of the projected savings will not be 100% achievable, even in
-theory. Some of the reasons include:
+that many of the projected savings will not be 100% achievable. Some of the reasons include:
 
 * Imported drugs often vary wildly in costs due to different import routes
 * The prescribing data rarely distinguishes between pack sizes.  Larger pack sizes tend to be cheaper per-dose than smaller pack sizes.  A prescriber has no influence over the pack size used to fulfill a prescription

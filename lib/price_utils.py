@@ -6,9 +6,19 @@ import numpy
 import csv
 import requests
 from sets import Set
-
+import sqlite3
 from googleapiclient import discovery
 from oauth2client.client import GoogleCredentials
+
+
+def get_substitutions():
+    # https://docs.google.com/spreadsheets/d/1SvMGCKrmqsNkZYuGW18Sf0wTluXyV4bhyZQaVLcO41c/edit#gid=1799396915
+    url = ("https://docs.google.com/spreadsheets/d/"
+           "1SvMGCKrmqsNkZYuGW18Sf0wTluXyV4bhyZQaVLcO41c/"
+           "pub?gid=1784930737&single=true&output=csv")
+    df = None
+    df = pd.read_csv(url)
+    return df
 
 
 def make_table_for_month(month='2016-09-01',
@@ -26,28 +36,18 @@ def make_table_for_month(month='2016-09-01',
     Sheet.
 
     """
-    url = ("https://docs.google.com/spreadsheets/d/"
-           "1SvMGCKrmqsNkZYuGW18Sf0wTluXyV4bhyZQaVLcO41c/"
-           "pub?gid=1784930737&single=true&output=csv")
     cases = []
     seen = Set()
-
-    with requests.Session() as s:
-        download = s.get(url)
-
-        decoded_content = download.content.decode('utf-8')
-
-        cr = csv.reader(decoded_content.splitlines(), delimiter=',')
-        cr.next()
-        for row in cr:
-            should_merge = row[5].strip() == "Y"
-            if should_merge:
-                source_code = row[1].strip()
-                code_to_merge = row[8].strip()
-                if source_code not in seen and code_to_merge not in seen:
-                    cases.append((source_code, code_to_merge))
-                seen.add(source_code)
-                seen.add(code_to_merge)
+    df = get_substitutions()
+    df = df[df['Really equivalent?'] == 'Y']
+    for row in df.iterrows():
+        data = row[1]
+        source_code = data[1].strip()
+        code_to_merge = data[10].strip()
+        if source_code not in seen and code_to_merge not in seen:
+            cases.append((source_code, code_to_merge))
+        seen.add(source_code)
+        seen.add(code_to_merge)
 
     query = """
       SELECT
@@ -167,7 +167,28 @@ def get_savings(for_entity='', group_by='', month='', cost_field='net_cost',
             df = run_gbq(sql)
             # Rename null values in category, so we can group by it
             df.loc[df['category'].isnull(), 'category'] = 'NP8'
-            return df
+            df = df.set_index(
+                'generic_presentation')
+            df.index.name = 'bnf_code'
+            # Add in substitutions column
+            subs = get_substitutions().set_index('Code')
+            subs['formulation_swap'] = (subs['Formulation'] +
+                            ' / ' +
+                            subs['Alternative formulation'])
+            df = df.join(
+                subs[['formulation_swap']], how='left')
+            con = sqlite3.connect("dmd.db")
+
+            # Add DMD info
+            sql = ("SELECT BNF_CODE, num_pack_sizes, flag_imported, "
+                   "flag_broken_bulk, flag_non_bioequivalence, "
+                   "flag_special_containers FROM dmd_product "
+                   "WHERE product_type = 1 -- generic")
+            dmd_info = pd.read_sql_query(sql, con).set_index('BNF_CODE')
+            df = df.join(dmd_info, how='left')
+            df.index.name = 'bnf_code'
+            return df.sort_values(
+                'possible_savings', ascending=False)
 
 
 def run_gbq(sql):

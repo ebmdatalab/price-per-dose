@@ -2,35 +2,70 @@
 
 This project compares the price-per-quantity between different clinically comparable products, so we can advise practices and CCGs on potential cost savings.
 
-Within a single month, for each presentation of every chemical substance (e.g. Tramadol Hydrochrolde 300mg tablets), we calcuate the price-per-dose at the cheapest decile. We then work out what each GP Practice or CCG could save if it prescribed that presentation at the best decile.
+Within a single month, for each presentation and brand of every chemical substance (e.g. Tramadol Hydrochrolde 300mg tablets), we calcuate the price-per-dose at the cheapest decile. We then work out what each GP Practice or CCG could save if it prescribed that presentation at the best decile.
 
+The idea is that the price achieved at the best decile for a chemical-presentation should be achievable for everyone; but see below for a discussion.
 
-* Within a single month: because the Drug Tariff changes monthly, making price-per-dose comparisons meaningless between months
-* GP Practices only
-* For a given practice or CCG, we discard savings that they are already making
+* We only consider data from a single month, because the Drug Tariff changes monthly, making price-per-dose comparisons meaningless between months
+* We cover data from GP Practices only
+* When summing total possible savings, for a given practice or CCG, we don't consider savings that they are already making
 
 # Interpretation
 
-In most cases, a saving should be achievable by switching to the cheapest brand available, rather than leaving the selection to pharmacists.  In some cases a saving will also be possible by switching formulation.
+The current model assumes that if pill A1 is expensive and pill A2 is
+cheap, the perfect practice could switch to prescribing 100%
+of pill A2.
 
-In some cases, the variability in price-per-dose is outside the influence of the prescriber. As a result, it is likely that most projected savings will not be 100% achievable, even in theory. Some of the reasons include:
+Accordingly, in most cases, a saving should be achievable by switching to the cheapest brand available, rather than leaving the selection to pharmacists.  In some cases a saving will also be possible by switching formulation.
+
+However, the variability in price-per-dose is often
+outside the influence of the prescriber. As a result, it is likely
+that most of the projected savings will not be 100% achievable, even in
+theory. Some of the reasons include:
 
 * Imported drugs often vary wildly in costs due to different import routes
 * The prescribing data rarely distinguishes between pack sizes.  Larger pack sizes tend to be cheaper per-dose than smaller pack sizes.  A prescriber has no influence over the pack size used to fulfill a prescription
 * In some cases, dispensers can charge the cost of an entire pack for medicines where the prescribed quantity is smaller than an entire pack ("broken bulk")
 * Inconsistencies in the data. We have tried to address these where we have found them (see below for details)
 * Non-bioequivalence. Some drugs within a generic class cannot always be considered clinically equivalent.
+* Licensing differences. Two drugs which are bioequivalent may not be licensed for all possible uses, so cannot be switched.
 
-An element of judgement is likely to be required in some of these cases, and they are not all detectable automatically. We therefore flag where products may be subject to any of these conditions.
+An element of judgement is likely to be required in many cases to
+decide how much of a theorical saving is possible in practice. We will
+flag where products may be subject to any of these conditions where it is possible to do so automatically.
 
-This is discussed further in issue #2.
+We have considered mitigating some of this effect by defining
+achievable savings in terms of the best-peforming practices for a
+presentation overall; i.e. assuming that the best-peforming practices
+are already achieving all the practically possible savings.
+Currently, however, the best achievable price is based on all prices
+of all brands, across all practices.
 
+This is discussed further in issues #2 and #16.
+
+
+# Interpreting the spreadsheet
+
+The per-CCG spreadsheet has the following column names:
+
+* `bnf_code`: the code for the generic equivalent of that presentation
+* `bnf_presentation`: the name of that presentation
+* `bnf_chemical`: the chemical of the presentation
+* `category`: the NHS Drug Tariff category of the presentation
+* `lowest_decile`: the best price-per-dose we take as achievable
+* `quantity`: the quantity of that presentation prescribed in the given month
+* `price_per_dose`: the achieved price per dose in the given month
+* `possible_savings`: the total possible savings for the given month
+* `formulation_swap`: formulations we have considered equivalent for the analysis (see **Formulation Swaps**, below)
+* `flag_imported`: set to `1` if the product is an import
+* `flag_broken_bulk`: set to `1` if the product can have broken bulk rules applied
+* `flag_non_bioequivance`: set to `1` if there are biolequivance issues between products with the generic category
 
 # Special handling of specific codes
 
 ## Products which can't be substituted but the data implies they can
 
-Our algorithm assumes all products coded as equivalent can be considered as possible substitutions.
+Our algorithm assumes all products coded as equivalent in the BNF can be considered as possible substitutions.
 
 However, there are some inconsistencies in the BNF coding which break this assumption.  For example, all Gluten Free Breads are coded as equivalent (sliced bread, wholemeal bread, etc).
 
@@ -70,7 +105,9 @@ See issue #1 for a full discussion.
 
 To calculate possible savings, we work out a price-per-dose by dividing the net cost for each product by its quantity.
 
-However, in a handful of products, the definition of `quantity` is not consistent, giving false positives for price variation.
+However, in a handful of products, the definition of `quantity` is not consistent, giving false positives for price variation.  We exclude these completely from our analysis.
+
+See issue #12 for discussion.
 
 ## "Unspecified" products
 

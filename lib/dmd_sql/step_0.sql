@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS dmd_product;
 CREATE TABLE dmd_product (
   DMDID INTEGER PRIMARY KEY,
-  BNF_CODE INTEGER,
+  BNF_CODE TEXT,
   VPID INTEGER,
   DISPLAY_NAME TEXT,
   EMA TEXT,
@@ -12,7 +12,7 @@ CREATE TABLE dmd_product (
   concept_class INTEGER,
   NURSE_F INTEGER,
   DENT_F INTEGER,
-  PROD_ORDER_NO INTEGER,
+  PROD_ORDER_NO TEXT,
   SCHED_1 INTEGER,
   SCHED_2 INTEGER,
   PADM INTEGER,
@@ -20,5 +20,9 @@ CREATE TABLE dmd_product (
   ACBS INTEGER,
   assort_flav INTEGER,
   CATCD INTEGER,
-  tariff_category INTEGER
+  tariff_category INTEGER,
+  flag_imported INTEGER,
+  flag_broken_bulk INTEGER,
+  flag_non_bioequivalence INTEGER,
+  flag_special_containers INTEGER
   );

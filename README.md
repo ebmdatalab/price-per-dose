@@ -11,6 +11,7 @@ We then work out what each GP Practice or CCG could save if it prescribed that p
 * We only consider data from a single month, because the Drug Tariff changes monthly, making price-per-dose comparisons meaningless between months
 * We cover data from GP Practices only
 * When summing total possible savings, for a given practice or CCG, we don't consider savings that they are already making
+* We use the NIC cost rather than the actual cost for these calculations
 
 # Interpretation
 

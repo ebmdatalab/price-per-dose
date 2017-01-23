@@ -1,24 +1,24 @@
-UPDATE dmd_product
-SET SCHED_1 = 1
-WHERE DMDID IN (SELECT
-  dmd_product.DMDID
-FROM dmd_product
-INNER JOIN AMP
-  ON AMP.APID = dmd_product.DMDID
-INNER JOIN AMPP
-  ON AMPP.APID = AMP.APID
-INNER JOIN PRESCRIB_INFO
-  ON AMPP.APPID = PRESCRIB_INFO.APPID
-  AND PRESCRIB_INFO.SCHED_1 = 1
-LEFT OUTER JOIN (SELECT
-  DMDID
-FROM dmd_product
-INNER JOIN AMP
-  ON AMP.APID = dmd_product.DMDID
-INNER JOIN AMPP
-  ON AMPP.APID = AMP.APID
-INNER JOIN PRESCRIB_INFO
-  ON AMPP.APPID = PRESCRIB_INFO.APPID
-  AND PRESCRIB_INFO.SCHED_1 != 1) notschedule_1
-  ON dmd_product.DMDID = notschedule_1.DMDID
-WHERE notschedule_1.DMDID IS NULL)
+update dmd_product
+set sched_1 = 1
+where dmdid in (select
+  dmd_product.dmdid
+from dmd_product
+inner join dmd_amp
+  on dmd_amp.apid = dmd_product.dmdid
+inner join dmd_ampp
+  on dmd_ampp.apid = dmd_amp.apid
+inner join dmd_prescrib_info
+  on dmd_ampp.appid = dmd_prescrib_info.appid
+  and dmd_prescrib_info.sched_1 = 1
+left outer join (select
+  dmdid
+from dmd_product
+inner join dmd_amp
+  on dmd_amp.apid = dmd_product.dmdid
+inner join dmd_ampp
+  on dmd_ampp.apid = dmd_amp.apid
+inner join dmd_prescrib_info
+  on dmd_ampp.appid = dmd_prescrib_info.appid
+  and dmd_prescrib_info.sched_1 != 1) notschedule_1
+  on dmd_product.dmdid = notschedule_1.dmdid
+where notschedule_1.dmdid is null)

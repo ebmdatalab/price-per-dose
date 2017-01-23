@@ -1,1 +1,0 @@
--- EMA flag. Not bothering.

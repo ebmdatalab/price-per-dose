@@ -1,6 +1,6 @@
 from lxml import etree
 import glob
-import sqlite3
+import psycopg2
 
 
 PRIMARY_KEYS = {
@@ -10,33 +10,28 @@ PRIMARY_KEYS = {
     'VMPP': 'VPPID'
 }
 
-SQLLITE_TYPE_MAP = {
-    'xs:date': 'TEXT',
-    'xs:string': 'TEXT',
-    'xs:integer': 'INTEGER',
-    'xs:float': 'REAL',
+PG_TYPE_MAP = {
+    'xs:date': 'date',
+    'xs:string': 'text',
+    'xs:integer': 'bigint',
+    'xs:float': 'double precision',
 }
 
 
 def connection():
-    conn = sqlite3.connect('dmd.db')
-    c = conn.cursor()
-    # Settings to speed things up
-    c.execute('PRAGMA cache_size = 500000')
-    c.execute('PRAGMA synchronous = OFF')
+    conn = psycopg2.connect("dbname=openprescribing user=root password=root")
     return conn
 
 
-
 def create_table(conn, info):
-    sql = "DROP TABLE IF EXISTS %s" % info['table_name']
-    conn.execute(sql)
-    conn.commit()
-    sql = "CREATE TABLE %s (" % info['table_name']
+    sql = 'DROP TABLE IF EXISTS "%s"' % info['table_name']
+    cursor = conn.cursor()
+    cursor.execute(sql.lower())
+    sql = 'CREATE TABLE "%s" (' % info['table_name']
     cols = []
     indexes = []
     for name, coltype in info['columns']:
-        row_sql = "%s %s" % (name, coltype)
+        row_sql = '"%s" %s' % (name, coltype)
         if name == PRIMARY_KEYS.get(info['table_name'], ''):
             row_sql += " PRIMARY KEY"
         elif any([name in x for x in PRIMARY_KEYS.values()]):
@@ -44,27 +39,28 @@ def create_table(conn, info):
         cols.append(row_sql)
     sql += ', '.join(cols)
     sql += ");"
-    conn.execute(sql)
+    cursor.execute(sql.lower())
     for i in indexes:
-        sql = "CREATE INDEX IF NOT EXISTS i_%s_%s ON %s(%s);" % (
+        sql = 'CREATE INDEX IF NOT EXISTS i_%s_%s ON "%s"("%s");' % (
             info['table_name'], i, info['table_name'], i)
-        conn.execute(sql)
-    conn.commit()
+        cursor.execute(sql.lower())
 
 
 def insert_row(conn, table_info, row_data):
-    sql = "INSERT INTO %s(%s) VALUES (%s)"
+    cursor = conn.cursor()
+    sql = 'INSERT INTO %s (%s) VALUES (%s)'
     table_name = table_info['table_name']
     cols = []
     vals = []
     for col, val in row_data:
-        cols.append(col)
+        cols.append('"%s"' % col)
         vals.append(val)
-    sql = sql % (table_name, ','.join(cols), ','.join('?' * len(vals)))
-    conn.execute(sql, vals)
+    sql = sql % (table_name, ','.join(cols), ','.join(['%s'] * len(vals)))
+    cursor.execute(sql.lower(), vals)
 
 
 def get_table_info(conn, schema_names):
+    table_prefix = "dmd_"
     all_tables = {}
     for schema_name in schema_names:
         xmlschema_doc = etree.parse("./files/%s" % schema_name)
@@ -89,7 +85,7 @@ def get_table_info(conn, schema_names):
                     current_table_def['table_name'] = 'LOOKUP_' + table.attrib['name']
                     current_table_def['node_name'] = "%s/INFO" % table.attrib['name']
                 else:
-                    current_table_def['table_name'] = table_metadata.attrib['name']
+                    current_table_def['table_name'] = table_prefix + table_metadata.attrib['name']
                     current_table_def['node_name'] = table_metadata.attrib['name']
 
                 columns = root.findall(
@@ -97,7 +93,7 @@ def get_table_info(conn, schema_names):
                     schema_name, ns)
             else:
                 current_table_def['long_name'] = None
-                current_table_def['table_name'] = table.attrib['name']
+                current_table_def['table_name'] = table_prefix + table.attrib['name']
                 current_table_def['node_name'] = table.attrib['name']
                 columns = table.findall('.//xs:element', ns)
             current_table_def['columns'] = []
@@ -106,7 +102,7 @@ def get_table_info(conn, schema_names):
             for column in columns:
                 col_name = column.attrib['name']
                 col_type = column.attrib['type']
-                current_table_def['columns'].append((col_name, SQLLITE_TYPE_MAP[col_type]))
+                current_table_def['columns'].append((col_name, PG_TYPE_MAP[col_type]))
 
             # Now, if it aleady exists having been described elsewhere,
             if current_table_def['table_name'] in all_tables:
@@ -128,20 +124,24 @@ def create_all_tables(conn):
 
 
 def create_dmd_product():
+    # Follow steps from
+    # http://www.nhsbsa.nhs.uk/PrescriptionServices/Documents/PrescriptionServices/dmd_Implemention_Guide_(Primary_Care)_v1.0.pdf
     import re
     conn = connection()
+    cursor = conn.cursor()
     for f in sorted(glob.glob("lib/dmd_sql/*sql"),
                     key=lambda x: int(re.findall(r'\d+', x)[0])):
         print "Post-processing", f
         with open(f, "rb") as sql:
             sql = sql.read()
-            conn.executescript(sql)
+            cursor.execute(sql)
             conn.commit()
     conn.close()
 
 
 def add_bnf_codes():
     conn = connection()
+    cursor = conn.cursor()
     from openpyxl import load_workbook
     # 113.831 rows in the spreadsheet
     wb = load_workbook(filename='files/Converted_DRUG_SNOMED_BNF.xlsx')
@@ -151,11 +151,13 @@ def add_bnf_codes():
         bnf_code = row[0].value
         # atc_code = row[1].value
         snomed_code = row[4].value
-        sql = "UPDATE dmd_product SET BNF_CODE = ? WHERE DMDID = ? "
-        success = conn.execute(sql, [bnf_code, snomed_code]).rowcount
-        if not success:
-            print "Could not find", snomed_code
+        sql = "UPDATE dmd_product SET BNF_CODE = %s WHERE DMDID = %s "
+        cursor.execute(sql.lower(), [bnf_code, snomed_code])
+        rowcount = cursor.rowcount
+        if not rowcount:
+            print "When adding BNF codes, could not find", snomed_code
     conn.commit()
+    conn.close()
 
 
 def process_datafiles(to_process):
@@ -178,7 +180,7 @@ def process_datafiles(to_process):
                         val = val.text
                     row_data.append((name, val))
                 insert_row(conn, info, row_data)
-            conn.commit()
+    conn.commit()
     conn.close()
 
 
@@ -188,7 +190,7 @@ if __name__ == '__main__':
         to_process = [sys.argv[1]]
     else:
         to_process = glob.glob("./files/*xml")
-    process_datafiles(to_process)
+    #process_datafiles(to_process)
     create_dmd_product()
     add_bnf_codes()
 

@@ -1,11 +1,11 @@
-UPDATE dmd_product
-SET product_type = 3
-WHERE DMDID IN (SELECT
-  DMDID
-FROM dmd_product
-INNER JOIN AMP
-  ON AMP.APID = dmd_product.DMDID
-INNER JOIN VMP
-  ON AMP.VPID = VMP.VPID
-WHERE VMP.NM = AMP.NM
-AND product_type = 2)
+update dmd_product
+set product_type = 3
+where dmdid in (select
+  dmdid
+from dmd_product
+inner join dmd_amp
+  on dmd_amp.apid = dmd_product.dmdid
+inner join dmd_vmp
+  on dmd_amp.vpid = dmd_vmp.vpid
+where dmd_vmp.nm = dmd_amp.nm
+and product_type = 2)

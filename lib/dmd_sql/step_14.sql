@@ -1,10 +1,10 @@
-UPDATE dmd_product
-SET assort_flav = 1
-WHERE DMDID IN (
-  SELECT DMDID
-  FROM dmd_product
-  INNER JOIN AMP
-    ON dmd_product.DMDID = AMP.APID
-  WHERE AMP.SUPPCD = 21014611000001102
-  AND AMP.AVAIL_RESTRICTCD != 9
-  AND ACBS = 1)
+update dmd_product
+set assort_flav = 1
+where dmdid in (
+  select dmdid
+  from dmd_product
+  inner join dmd_amp
+    on dmd_product.dmdid = dmd_amp.apid
+  where dmd_amp.suppcd = 21014611000001102
+  and dmd_amp.avail_restrictcd != 9
+  and acbs = 1)

@@ -64,12 +64,14 @@ def make_table_for_month(month='2016-09-01',
       FROM
         ebmdatalab.%s.%s
       WHERE month = TIMESTAMP('%s')
-    """ % (''.join(["WHEN '%s' THEN '%s'" % (code_to_merge, source_code)
-            for (source_code, code_to_merge) in cases]),
+    """ % (''.join(
+        ["WHEN '%s' THEN '%s'" % (code_to_merge, source_code)
+         for (source_code, code_to_merge) in cases]),
            namespace,
            prescribing_table,
            month)
-    target_table_name = 'prescribing_with_merged_codes_%s' % month.replace('-', '_')
+    target_table_name = 'prescribing_with_merged_codes_%s' % month.replace(
+        '-', '_')
     query_and_return('ebmdatalab', namespace,
                      target_table_name,
                      query, legacy=False)

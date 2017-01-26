@@ -81,7 +81,7 @@ FROM (
                   OR SUBSTR(bnf_code, 1, 9) == '0601060U0' OR SUBSTR(bnf_code, 1, 9) == '0601060D0'), -- unless they're one of our two exceptions -- see issue #1
               CONCAT(SUBSTR(bnf_code, 1, 9), 'AA', SUBSTR(bnf_code, 14, 2), SUBSTR(bnf_code, 14, 2)),
               NULL) AS generic_presentation,
-            {{ cost_field }}/quantity AS price_per_dose
+            AVG({{ cost_field }}/quantity) AS price_per_dose
           FROM
             {{ prescribing_table }} AS p
           LEFT JOIN ebmdatalab.hscic.practices practices
@@ -90,7 +90,8 @@ FROM (
             practices.setting = 4 AND
             month = TIMESTAMP("{{ month }}")
             {{ restricting_condition }}
-            ))
+          GROUP BY practice, generic_presentation)
+          )
       WHERE generic_presentation IS NOT NULL
       GROUP BY
         generic_presentation) deciles

@@ -190,7 +190,7 @@ if __name__ == '__main__':
         to_process = [sys.argv[1]]
     else:
         to_process = glob.glob("./files/*xml")
-    #process_datafiles(to_process)
+    process_datafiles(to_process)
     create_dmd_product()
     add_bnf_codes()
 

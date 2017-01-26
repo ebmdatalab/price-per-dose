@@ -4,7 +4,8 @@ This project compares the price-per-quantity between different clinically compar
 
 We work from the monthly NHS dataset. In this, each row of data summarises all prescribing by a single BNF code (i.e. presentation, be it generic or branded) for one practice. For example, for a given practice we might see two rows of data for tramadol: one for Tramadol Hydrochloride 300mg tablets where it was prescribed generically; and one for Tramulief 300mg tablets where it was prescribed by brand.
 
-Within a single month, for each row of data, we calculate a price-per-dose (in the case of Tramadol tablets, this is a price-per-pill).  We then approximate a realistic, best-case price-per-pill by calculating the cheapest decile across all brands (and generics) for that presentation.
+Within a single month, we calculate an average price-per-dose achieved by each practice for each presentation (generic and branded combined).  We then approximate a realistic, best-case price-per-pill by finding the average price-per-dose which is at the cheapest decile for that presentation.
+
 
 We then work out what each GP Practice or CCG could save if it prescribed that presentation at the best decile.
 
@@ -12,6 +13,10 @@ We then work out what each GP Practice or CCG could save if it prescribed that p
 * We cover data from GP Practices only
 * When summing total possible savings, for a given practice or CCG, we don't consider savings that they are already making
 * We use the NIC cost rather than the actual cost for these calculations
+
+
+Within a single month, for each row of data, we calculate a price-per-dose (in the case of Tramadol tablets, this is a price-per-pill).  We then approximate a realistic, best-case price-per-pill by calculating the cheapest decile across all brands (and generics) for that presentation.
+
 
 # Interpretation
 
@@ -36,12 +41,21 @@ An element of judgement is likely to be required in many cases to
 decide how much of a theorical saving is possible in practice. We will
 flag where products may be subject to any of these conditions where it is possible to do so automatically.
 
-We have considered mitigating some of this effect by defining
-achievable savings in terms of the best-peforming practices for a
-presentation overall; i.e. assuming that the best-peforming practices
-are already achieving all the practically possible savings.
-Currently, however, the best achievable price is based on all prices
-of all brands, across all practices.
+We have mitigated some of this effect by assuming that the best-peforming practices are already achieving
+all the practically possible savings, and selecting the price-per-dose achieved by the practice at the cheapest decile.
+
+An alternative, less conservative approach, is to define a best-case
+price-per-dose by taking the average price-per-dose at the cheapest
+decile for a presentation (brands and generic) across the entire
+dataset. This has the effect of removing the assumption that the
+best-performing practices are already achieving the best real-world
+savings possible.
+
+Compare the two approaches:
+
+ * [Default scenario](https://github.com/ebmdatalab/price-per-dose/blob/7d9d2c5ebb22875ce3442fcec08ab65f8a28fed0/Price%20per%20dose.ipynb): assuming the best performing practices are already doing the realistic best that can be done
+ * [Alternative scenario](https://github.com/ebmdatalab/price-per-dose/blob/5be742773f866f9c184f1db86e569ccba45d5429/Price%20per%20dose.ipynb): assuming that the best performing practice could theoretically achieve a price-per-dose that is based only on the chemicals and not what practices are already doing
+
 
 This is discussed further in issues #2 and #16.
 

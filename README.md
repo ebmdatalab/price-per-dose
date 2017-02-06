@@ -2,21 +2,17 @@
 
 This project compares the price-per-quantity between different clinically comparable products, so we can advise practices and CCGs on potential cost savings.
 
-We work from the monthly NHS dataset. In this, each row of data summarises all prescribing by a single BNF code (i.e. presentation, be it generic or branded) for one practice. For example, for a given practice we might see two rows of data for tramadol: one for Tramadol Hydrochloride 300mg tablets where it was prescribed generically; and one for Tramulief 300mg tablets where it was prescribed by brand.
+We work from the monthly [GP Practice prescribing data](http://content.digital.nhs.uk/searchcatalogue?q=title%3A%22presentation+level+data%22&area=&size=10&sort=Relevance). In this, each row of data describes prescribing of a presentation for one practice for that month. For example, for a given practice we might see two rows of data for tramadol: one for Tramadol Hydrochloride 300mg tablets where it was prescribed generically; and one for Tramulief 300mg tablets where it was prescribed by brand.
 
-Within a single month, we calculate an average price-per-dose achieved by each practice for each presentation (generic and branded combined).  We then approximate a realistic, best-case price-per-pill by finding the average price-per-dose which is at the cheapest decile for that presentation.
-
+Within a single month, we calculate the average price-per-dose achieved by each practice for each presentation (generic and branded combined).  We then approximate a realistic, best-case price-per-dose by finding the average price-per-dose which is at the cheapest decile for that presentation.
 
 We then work out what each GP Practice or CCG could save if it prescribed that presentation at the best decile.
 
 * We only consider data from a single month, because the Drug Tariff changes monthly, making price-per-dose comparisons meaningless between months
-* We cover data from GP Practices only
+* We cover data from standard GP Practices only
 * When summing total possible savings, for a given practice or CCG, we don't consider savings that they are already making
 * We use the NIC cost rather than the actual cost for these calculations
-
-
-Within a single month, for each row of data, we calculate a price-per-dose (in the case of Tramadol tablets, this is a price-per-pill).  We then approximate a realistic, best-case price-per-pill by calculating the cheapest decile across all brands (and generics) for that presentation.
-
+* When calculating a price-per-dose, we combine all formluations (e.g. tablets and capsules) that we consider to be clinically equivalent.
 
 # Interpretation
 
@@ -24,32 +20,121 @@ The current model assumes that if pill A1 is expensive and pill A2 is
 cheap, the perfect practice could switch to prescribing 100%
 of pill A2.
 
-Accordingly, in most cases, a saving should be achievable by switching to the cheapest brand available, rather than leaving the selection to pharmacists.  In some cases a saving will also be possible by switching formulation.
+## Types of savings
 
-However, the variability in price-per-dose is often
-outside the influence of the prescriber. As a result, it is likely
-that many of the projected savings will not be 100% achievable. Some of the reasons include:
+Most saving opportunities are possible because:
 
-* Imported drugs often vary wildly in costs due to different import routes
-* The prescribing data rarely distinguishes between pack sizes.  Larger pack sizes tend to be cheaper per-dose than smaller pack sizes.  A prescriber has no influence over the pack size used to fulfill a prescription
-* In some cases, dispensers can charge the cost of an entire pack for medicines where the prescribed quantity is smaller than an entire pack ("broken bulk")
-* Inconsistencies in the data. We have tried to address these where we have found them (see below for details)
-* Non-bioequivalence. Some drugs within a generic class cannot always be considered clinically equivalent.
+
+### The Drug Tariff prices do not reflect low-cost alternatives that are on the market
+
+The Tariff price is usually based on the list prices of one or more supplier. Particularly in a crowded market where many brands and manufactured generics are available, the Tariff price may not reflect the cheapest prices available.
+
+This happens most frequently in Category C, where the Tariff price is usually based on the list price of the originator brand. For example, as of Jan 2016, the Tariff price for generic Flucitasone/Salmeterol is based on the GSK list price for Seretide, which is up to 25% higher than the cheapest brand available.
+
+The quickest way to make a cost saving in such cases is to switch to prescribing by the cheapest brand.
+
+## Different formulations may vary hugely in price
+
+This is a variation of the list-price phenomenon described above. Where (for example) both tablets and capsules are available for a Category C drug, the originator brands may have abritrarily different list prices, which are then reflected in the Tariff.
+
+For example, the Tariff price of Venlafaxine 150mg MR capsules is
+twice that of the equivalent tablets. There is no underlying market
+logic to the cost differential: the cheapest brand available is, in
+fact, capsules.
+
+In this case, a large cost saving could be achieved by prescribing tablets generically, but an even larger cost saving could be achieved by prescribing a specific brand of capsulte.
+
+## Sometimes, GPs prescribe expensive brands
+
+For example, at the time of writing there is widespread prescribing of Nasonex, which is more than 3 times the price of the manufactured generic equivalent listed in the Tariff.
+
+The cost saving here would be achieved by switching to prescribing by
+the generic presentation (for which cheap manufactured generics are
+available).
+
+Expensive brands may be prescribed out of patient preference, or for
+historic reasons, or occasionally for clinical reasons (e.g. in the
+case of many antiepileptic drugs).
+
+## Suppliers creating incentives for pharmacies to dispense at uncompetitive prices
+
+This is a price-gouging practice which can be applied to any presentation not listed in the Drug Tariff ("NP8").
+
+A generic presentation which isn't in the Tariff can be invoiced by
+the dispenser at any available list price. There are various
+contractual mechanisms which allow a dispenser and a supplier to
+collude in sharing the profit for arbitrarily-priced drugs.
+
+The fix is either to prescribe a specific, cheaper brand; or wait for
+the drug to be placed in the Tariff. Sometimes one formulation
+(e.g. tablets) will be in the Tariff, but another (e.g. capsules)
+isn't. In these cases keeping the prescription generic but switching
+the formulation will also realise a saving.
+
+## No official non-propriety name exists
+
+Two kinds of testing strips (Blood glucose, and Urine) will never
+appear in the tariff as products in the tariff must be listed against
+an official non-proprietary name, and these don't have one.
+
+Such categories typicaly contain a very large range of functionally
+equivalent products with a correspondingly large range of prices.
+
+
+### Resource scarcity or monpolies
+
+Many drugs are only available from one supplier. In these cases,
+particularly where the supplier is outside the PPRS, the list price of
+a drug is liable to go up unexpectedly for a range of reasons, the simplest being  market forces such as resource scarcity, or reducing efficiencies of scale for items with reducing demand.
+
+Sometimes it is alleged that monopoly positions are exploited by arbitrarily inflating costs, as happened in the [case of Epanutin](https://www.gov.uk/government/news/cma-fines-pfizer-and-flynn-90-million-for-drug-price-hike-to-nhs). When the drug has a very narrow therapeutic index (such as Epanutin), the supplier will often include their name in the authorised marketing name of the product (e.g. *Phenytoin Sodium Flynn*). This means GPs are able to continue to prescribe the product by name (as they must for drugs with such a narrow therapeutic index), but despite being generic, [no identical imported drugs can be substituted](http://www.wpt.co.uk/resources/news/parallel-imports-into-the-uk/) as the name as prescribed includes a trade mark.
+
+
+It is very difficult to detect the difference between these two
+reasons for price hikes in the data, and the potential savings are
+similarly hard to identify from data.  Sometimes there is a clinically
+equivalent alternative drug available, but in drugs with a very narrow
+therapeutic index (e.g. Epanutin) a switch is not possible.
+
+
+## Achievability of savings
+
+As can be seen from the above, in most cases a saving should be
+achievable by switching to the cheapest brand available, rather than
+leaving the selection to pharmacists.  In some cases a saving will
+also be possible by switching formulation (e.g. from capsules to
+tablets). Where we have included formulation swaps in our calculation,
+we indicate this in the data.
+
+However, the variability in price-per-dose is sometimes outside the
+influence of the prescriber. As a result, it is likely that many of
+the projected savings will not be 100% achievable. Some of the reasons
+include (in rough order of their relative likely effect):
+
 * Licensing differences. Two drugs which are bioequivalent may not be licensed for all possible uses, so cannot be switched.
+* Non-bioequivalence. Some drugs within a generic class cannot always be considered clinically equivalent.
+* Imported drugs often vary wildly in costs due to different import routes, and the prescriber may not be able to specify an imported version (or, of course, an import route)
+* Inconsistencies in the data. We have tried to address these where we have found them (see below for details)
+* Our calculations use NIC cost, which is based on the list / tariff prices for that drug. However, the actual costs paid by the NHS to dispensers include bulk discounts and other adjustments. Usually, this means we will slightly overestinate the possible savings (because we are not including the effect of bulk discounts).
+* The prescribing data rarely distinguishes between pack sizes.  Larger pack sizes tend to be cheaper per-dose than smaller pack sizes.  A prescriber has no influence over the pack size used to fulfill a prescription. This effect should usually be minimal.
+* In some cases, dispensers can charge the cost of an entire pack for medicines where the prescribed quantity is smaller than an entire pack ("broken bulk"). It is unlikely that this happens systematically, and therefore this effect is likely to be small and semi-random
 
-An element of judgement is likely to be required in many cases to
-decide how much of a theorical saving is possible in practice. We will
-flag where products may be subject to any of these conditions where it is possible to do so automatically.
+Due to these variables, an element of judgement is likely to be
+required to decide how much of a theorical saving is possible in
+practice. We flag where products may be subject to any of these
+conditions where it is possible to do so automatically.
 
-We have mitigated some of this effect by assuming that the best-peforming practices are already achieving
-all the practically possible savings, and selecting the price-per-dose achieved by the practice at the cheapest decile.
+## Less conservative model
 
-An alternative, less conservative approach, is to define a best-case
-price-per-dose by taking the average price-per-dose at the cheapest
-decile for a presentation (brands and generic) across the entire
-dataset. This has the effect of removing the assumption that the
-best-performing practices are already achieving the best real-world
-savings possible.
+We have mitigated some of this effect by assuming that the
+best-peforming practices are already achieving all the practically
+possible savings, and selecting the price-per-dose achieved by the
+practice at the cheapest decile.  An alternative, less conservative
+approach, is to define a best-case price-per-dose by taking the
+average price-per-dose at the cheapest decile for a presentation
+(brands and generic) across the entire dataset. This has the effect of
+removing the assumption that the best-performing practices are already
+achieving the best real-world savings possible.
 
 Compare the two approaches:
 
@@ -107,9 +192,9 @@ See #11 (and #8) for discussion.
 
 ### Other uncoded equivalents
 
-There are over 1000 products without a generic equivalent listed in the BNF (identified by codes ending in `A0`).
+There are over 1000 products without a generic equivalent listed in the BNF (identified by codes ending in `A0`; and in dm+d with a *Basis of name: Other* for their VMP).
 
-Some of these can be meaningfully compared with each other, despite not having a formally coded generic equivalent. For example, Blood Glucose Test Strips are clinically equivalent but have no generic equivalency coded in the BNF.
+Some of these can be meaningfully compared with each other, despite not having a formally coded generic equivalent. For example, Blood Glucose Test Strips are clinically equivalent but have no generic equivalency coded in the BNF (though they are grouped with the [*Blood glucose biosensor testing strips* VMP](http://dmd.medicines.org.uk/DesktopDefault.aspx?VMP=3432511000001102&toc=nofloat) in dm+d.
 
 We can group them together by BNF subparagraph (*Glucose Blood Testing Reagents*) as every product within that paragraph is a blood glucose test strip, and the quantity field consistently refers to number of strips.
 

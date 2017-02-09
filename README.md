@@ -33,7 +33,7 @@ This happens most frequently in Category C, where the Tariff price is usually ba
 
 The quickest way to make a cost saving in such cases is to switch to prescribing by the cheapest brand.
 
-## Different formulations may vary hugely in price
+### Different formulations may vary hugely in price
 
 This is a variation of the list-price phenomenon described above. Where (for example) both tablets and capsules are available for a Category C drug, the originator brands may have abritrarily different list prices, which are then reflected in the Tariff.
 
@@ -44,7 +44,7 @@ fact, capsules.
 
 In this case, a large cost saving could be achieved by prescribing tablets generically, but an even larger cost saving could be achieved by prescribing a specific brand of capsulte.
 
-## Sometimes, GPs prescribe expensive brands
+### Sometimes, GPs prescribe expensive brands
 
 For example, at the time of writing there is widespread prescribing of Nasonex, which is more than 3 times the price of the manufactured generic equivalent listed in the Tariff.
 
@@ -56,7 +56,7 @@ Expensive brands may be prescribed out of patient preference, or for
 historic reasons, or occasionally for clinical reasons (e.g. in the
 case of many antiepileptic drugs).
 
-## Suppliers creating incentives for pharmacies to dispense at uncompetitive prices
+### Suppliers invent incentives for pharmacies to dispense at uncompetitive prices
 
 This is a price-gouging practice which can be applied to any presentation not listed in the Drug Tariff ("NP8").
 
@@ -71,7 +71,7 @@ the drug to be placed in the Tariff. Sometimes one formulation
 isn't. In these cases keeping the prescription generic but switching
 the formulation will also realise a saving.
 
-## No official non-propriety name exists
+### No official non-propriety name exists
 
 Two kinds of testing strips (Blood glucose, and Urine) will never
 appear in the tariff as products in the tariff must be listed against
@@ -89,13 +89,17 @@ a drug is liable to go up unexpectedly for a range of reasons, the simplest bein
 
 Sometimes it is alleged that monopoly positions are exploited by arbitrarily inflating costs, as happened in the [case of Epanutin](https://www.gov.uk/government/news/cma-fines-pfizer-and-flynn-90-million-for-drug-price-hike-to-nhs). When the drug has a very narrow therapeutic index (such as Epanutin), the supplier will often include their name in the authorised marketing name of the product (e.g. *Phenytoin Sodium Flynn*). This means GPs are able to continue to prescribe the product by name (as they must for drugs with such a narrow therapeutic index), but despite being generic, [no identical imported drugs can be substituted](http://www.wpt.co.uk/resources/news/parallel-imports-into-the-uk/) as the name as prescribed includes a trade mark.
 
-
 It is very difficult to detect the difference between these two
 reasons for price hikes in the data, and the potential savings are
 similarly hard to identify from data.  Sometimes there is a clinically
 equivalent alternative drug available, but in drugs with a very narrow
 therapeutic index (e.g. Epanutin) a switch is not possible.
 
+Examples of drugs which (1) are only available from a single supplier; (2) have relatively small but significant spending; (3) have seen recent, extreme price hikes (>300%); and (4) for which there are realistically no therapeutic substitution, include:
+
+* Trimipramine Mal Cap 50mg
+* Clonazepam Tab 500mcg
+* Anytriptyline Hydrochloride Tab 50ms
 
 ## Achievability of savings
 

@@ -174,6 +174,7 @@ def get_savings(for_entity='', group_by='', month='', cost_field='net_cost',
             df.index.name = 'bnf_code'
             # Add in substitutions column
             subs = get_substitutions().set_index('Code')
+            subs = subs[subs['Really equivalent?'] == 'Y']
             subs['formulation_swap'] = (
                 subs['Formulation'] +
                 ' / ' +

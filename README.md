@@ -166,6 +166,46 @@ The per-CCG spreadsheet has the following column names:
 * `flag_broken_bulk`: set to `1` if the product can have broken bulk rules applied
 * `flag_non_bioequivance`: set to `1` if there are biolequivance issues between products with the generic category
 
+# Implications of prescribing by brand
+
+Most cost savings can be realised by prescribing by brand. This is (to some extent) problematic, as it goes against historic clinical recommendations and the way the system was originally set up to promote competitive markets.
+
+Also, because dispensing contractors' profits are guaranteed, any savings to the NHS made by switching to cheap brands will ultimately be offset by increased costs for Category M medicines or decreased discount reductions.
+
+However, in a situation where CCGs are the primary gatekeepers of spending it is unavoidable that they have the most incentives to become the market driver of costs.  In the current situation, where some CCGs have more information and capability to act on it than others, then those CCGs will benefit disproportionately. Conversely, pharmacy contractors in such areas will have their profits reduced disproportionately to other contractors.
+
+Therefore, any system which equalises access to cost-saving opportunities increases equity across the country in terms of CCG funding.
+
+However, because prescriptions are "sticky" (patients and GPs are reluctant to switch them), CCGs are likely to be inefficient market actors, compared with the dispensing contractors when dealing with generically prescribed items.
+
+
+## Clinical issues
+
+Clinically, generic prescribing is recommended to avoid unecessary cognitive overhead which may lead to confusion or mistakes. For example:
+
+* GPs have to think about fewer drug names, so there are likely to be fewer errors
+* Patients get drugs in consistently branded boxes, reducing the risk of confusion (e.g. "double dipping")
+
+## Market efficiency issues
+
+In terms of market incentives, branded prescribing is not optimal because:
+
+* the main mechanism by which pharmacists are guaranteed their profit is by arbitrary margins added by the DH to the list price in Category M drugs. Removing their ability to make a margin reduces their incentive to push wholesalers for better prices, which can be expected drive up overall costs for the NHS.
+  * against this argument, if GPs were to prescribe according to current market conditions by switching to the cheapest alternatives (i.e. they were willing to switch products in response to price changes), this would in theory maintain the pressure on manufacturers and wholesalers to offer competitive prices
+* when paying pharmacies, the NHS assumes a discount rate which reflects assumed bulk discounts negotiated by pharmacists. Because the overall pharmacy profit is guaranteed, drug companies have responded by removing discounts on some branded drugs (where the contractor has no choice about what to dispense), which increases their own profits at a cost to the NHS (see [this OFT report](http://webarchive.nationalarchives.gov.uk/20140402142426/http:/www.oft.gov.uk/shared_oft/reports/comp_policy/oft967.pdf) and [this PSNC webpage](https://psnc.org.uk/funding-and-statistics/funding-distribution/dispensing-at-a-loss/) for more on this).
+
+On the other hand, there are market efficiency problems around generic prescribing too - most significantly in "NP8" products (see above for more).
+
+## Contractor fairness
+
+The practice of branded prescribing, when evenly applied across the country, should not unduly affect contractor profits as these are guaranteed and applied via Category M and bulk discount deductions.
+
+However, when unevenly applied, some contractors will be significantly disadvantaged compared with others.
+
+For this reason, the PSNC is ["completely against"](http://psnc.org.uk/funding-and-statistics/funding-distribution/retained-margin-category-m/) the practice of generic prescribing.
+
+On the other hand, if branded prescribing cost-saving opportunities were applied evenly across the country, this would no longer be an issue.
+
 # Special handling of specific codes
 
 ## Products which can't be substituted but the data implies they can

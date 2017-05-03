@@ -214,7 +214,7 @@ Our algorithm assumes all products coded as equivalent in the BNF can be conside
 
 However, there are some inconsistencies in the BNF coding which break this assumption.  For example, all Gluten Free Breads are coded as equivalent (sliced bread, wholemeal bread, etc).
 
-There are currently four such classes we know of; these are completely excluded from our analysis. The problem is fully described in issue #9.
+There are currently four such classes we know of; these are completely excluded from our analysis. The problem is fully described in [issue #9](https://github.com/ebmdatalab/price-per-dose/issues/9).
 
 
 ## Products which can be substituted but the data implies they can't
@@ -232,7 +232,7 @@ Therefore, we consider a range of formulations as equivalent.  We've created a m
 * Effervescent/soluble tablets are considered to be non-interchangeable.
 * Everything with a different route (e.g. tabs vs suppositories) has been left out.
 
-See #11 (and #8) for discussion.
+See [issue #11](https://github.com/ebmdatalab/price-per-dose/issues/11) (and [issue #8](https://github.com/ebmdatalab/price-per-dose/issues/8)) for discussion.
 
 ### Other uncoded equivalents
 
@@ -244,7 +244,7 @@ We can group them together by BNF subparagraph (*Glucose Blood Testing Reagents*
 
 We have identified one other subparagraph that can be treated in the same way -- *Urine Testing Reagents*).
 
-See issue #1 for a full discussion.
+See [issue #1](https://github.com/ebmdatalab/price-per-dose/issues/1) for a full discussion.
 
 ## Products with an inconsistent definition of `quantity`
 
@@ -252,7 +252,7 @@ To calculate possible savings, we work out a price-per-dose by dividing the net 
 
 However, in a handful of products, the definition of `quantity` is not consistent, giving false positives for price variation.  We exclude these completely from our analysis.
 
-See issue #12 for discussion.
+See [issue #12](https://github.com/ebmdatalab/price-per-dose/issues/) for discussion.
 
 ## "Unspecified" products
 
